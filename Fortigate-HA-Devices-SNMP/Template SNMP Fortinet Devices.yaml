@@ -1,0 +1,1546 @@
+zabbix_export:
+  version: '6.2'
+  date: '2022-12-10T15:21:29Z'
+  template_groups:
+    -
+      uuid: e5e24234980a4eb6ba5945412cc8ba27
+      name: Fortigate
+  templates:
+    -
+      uuid: 86aeec9e802c416cbc675678834fb11a
+      template: 'Template SNMP Fortinet Devices'
+      name: 'Template SNMP Fortinet Devices'
+      groups:
+        -
+          name: Fortigate
+      items:
+        -
+          uuid: 647cf846b1e84b8d826e055a388eaf63
+          name: 'HA Mode'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.12356.101.13.1.1.0
+          key: fortinet.ha.mode
+          delay: 5m
+          history: 15d
+          trends: 90d
+          valuemap:
+            name: 'Fortigate HA Mode'
+          tags:
+            -
+              tag: Application
+              value: HA
+        -
+          uuid: 7a868cfabc314469a5effe76a39025fb
+          name: 'Current connections'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.12356.101.4.1.8.0
+          key: fortinetCurrentConnections
+          delay: 5m
+          history: 15d
+          trends: 90d
+          units: KC
+          preprocessing:
+            -
+              type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          tags:
+            -
+              tag: Application
+              value: 'Fortinet Performance'
+        -
+          uuid: 88b485b981434f8aa06ea62839f70bbe
+          name: 'Fortinet Uptime'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.12356.101.4.1.20.0
+          key: fortinetUpTime
+          delay: '30'
+          history: 15d
+          trends: 90d
+          units: uptime
+          preprocessing:
+            -
+              type: MULTIPLIER
+              parameters:
+                - '1e-2'
+          tags:
+            -
+              tag: Application
+              value: 'Fortinet Performance'
+          triggers:
+            -
+              uuid: c82d45f3ecab412fb4d22ff4bacc40a1
+              expression: 'last(/Template SNMP Fortinet Devices/fortinetUpTime,#10)>last(/Template SNMP Fortinet Devices/fortinetUpTime)'
+              name: 'Fortinet {HOST.NAME} Rebooted'
+              priority: AVERAGE
+              description: 'The Fortinet has been rebooted during last 10 checks'
+        -
+          uuid: e192157343bc40f1ad18747183b464b2
+          name: 'Firmware Version'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.12356.101.4.1.1.0
+          key: SysmFirmwareVersion
+          delay: 3h
+          trends: '0'
+          value_type: CHAR
+          inventory_link: OS
+          tags:
+            -
+              tag: Application
+              value: 'Fortinet General'
+      discovery_rules:
+        -
+          uuid: 07567a7217e6484e900a8c10f2d8f8ab
+          name: 'HA Modules'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#HAINDEX},.1.3.6.1.4.1.12356.101.13.2.1.1.1,{#HAHOSTNAME},.1.3.6.1.4.1.12356.101.13.2.1.1.11]'
+          key: discovery.ha.modules
+          delay: 3h
+          filter:
+            conditions:
+              -
+                macro: '{#SNMPINDEX}'
+                value: '1'
+                formulaid: A
+          item_prototypes:
+            -
+              uuid: 67c439f9fa394115ab6394e4292cc293
+              name: 'Appliance {#HAHOSTNAME} CPU Usage'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.13.2.1.1.3.{#SNMPINDEX}'
+              key: 'appliance.cpuusage.[{#SNMPINDEX}]'
+              delay: 3m
+              history: 15d
+              trends: 90d
+              value_type: FLOAT
+              units: '%'
+              tags:
+                -
+                  tag: Application
+                  value: CPU
+                -
+                  tag: Application
+                  value: 'Fortinet Performance'
+                -
+                  tag: Application
+                  value: HA
+              trigger_prototypes:
+                -
+                  uuid: 75fe88e6ab8b4f58848f051eda877756
+                  expression: 'last(/Template SNMP Fortinet Devices/appliance.cpuusage.[{#SNMPINDEX}],#3)>{$CPU.UTIL}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template SNMP Fortinet Devices/appliance.cpuusage.[{#SNMPINDEX}],#3)<{$CPU.UTIL}'
+                  name: '{#HAHOSTNAME} CPU is too load'
+                  opdata: 'Used CPU: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+            -
+              uuid: de86c5618c454d3f9d1099891ceda754
+              name: 'Appliance {#HAHOSTNAME} Memory Usage'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.13.2.1.1.4.{#SNMPINDEX}'
+              key: 'appliance.memoryusage.[{#SNMPINDEX}]'
+              delay: 3m
+              history: 15d
+              trends: 90d
+              value_type: FLOAT
+              units: '%'
+              tags:
+                -
+                  tag: Application
+                  value: 'Fortinet Performance'
+                -
+                  tag: Application
+                  value: HA
+                -
+                  tag: Application
+                  value: Memory
+              trigger_prototypes:
+                -
+                  uuid: 8dcb24d6610c4afa8869f9923d02834a
+                  expression: 'last(/Template SNMP Fortinet Devices/appliance.memoryusage.[{#SNMPINDEX}],#3)>{$MEMORY.UTIL}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template SNMP Fortinet Devices/appliance.memoryusage.[{#SNMPINDEX}],#3)<{$MEMORY.UTIL}'
+                  name: '{#HAHOSTNAME} Memory is too load'
+                  opdata: 'Used Memory: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+            -
+              uuid: cfd6969a8e9b418196f60d38a1e43c1d
+              name: 'Appliance {#HAHOSTNAME} Net Usage'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.13.2.1.1.5.{#SNMPINDEX}'
+              key: 'appliance.netusage.[{#SNMPINDEX}]'
+              delay: 3m
+              history: 15d
+              trends: 90d
+              value_type: FLOAT
+              units: kbps
+              tags:
+                -
+                  tag: Application
+                  value: HA
+                -
+                  tag: Application
+                  value: 'Network Traffic'
+            -
+              uuid: 453f570697d6477c9de7fbb39828795e
+              name: 'Appliance {#HAHOSTNAME} Primary Serial'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.13.2.1.1.16.{#SNMPINDEX}'
+              key: 'appliance.primaryserial.[{#SNMPINDEX}]'
+              history: 15d
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
+              tags:
+                -
+                  tag: Application
+                  value: HA
+            -
+              uuid: 903bb89e7cb84551aeea9484aafe8209
+              name: 'Appliance {#HAHOSTNAME} Serial'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.13.2.1.1.2.{#SNMPINDEX}'
+              key: 'appliance.serial.[{#SNMPINDEX}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
+              tags:
+                -
+                  tag: Application
+                  value: 'Fortinet General'
+                -
+                  tag: Application
+                  value: HA
+            -
+              uuid: 513ed335a02b4b7fa423047f70eb75d8
+              name: 'Appliance {#HAHOSTNAME} Ses Count'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.13.2.1.1.5.{#SNMPINDEX}'
+              key: 'appliance.sescount.[{#SNMPINDEX}]'
+              delay: 2m
+              history: 15d
+              trends: 90d
+              value_type: FLOAT
+              tags:
+                -
+                  tag: Application
+                  value: HA
+                -
+                  tag: Application
+                  value: 'Network Traffic'
+            -
+              uuid: 85332fed13324468a209d4e0949cfb87
+              name: 'Appliance {#HAHOSTNAME} Sync Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.13.2.1.1.12.{#SNMPINDEX}'
+              key: 'appliance.syncstatus.[{#SNMPINDEX}]'
+              delay: 2m
+              history: 15d
+              trends: 90d
+              valuemap:
+                name: 'Fortigate HA Sync Status'
+              tags:
+                -
+                  tag: Application
+                  value: HA
+        -
+          uuid: e80fabcea83040b093a3f4dc771ed91b
+          name: 'FAN Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#FANNAME},.1.3.6.1.4.1.12356.101.4.3.2.1.2,{#FANVALUE},.1.3.6.1.4.1.12356.101.4.3.2.1.3]'
+          key: fan.discovery
+          delay: 3h
+          filter:
+            evaltype: AND
+            conditions:
+              -
+                macro: '{#FANNAME}'
+                value: Fan
+                formulaid: A
+              -
+                macro: '{#FANVALUE}'
+                value: '-1'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+          item_prototypes:
+            -
+              uuid: ec7f00c95d984b338ada1e4d4f2d0ecb
+              name: '{#FANNAME} RPM'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.4.3.2.1.3.{#SNMPINDEX}'
+              key: 'rpm.[{#FANNAME}]'
+              delay: 5m
+              history: 15d
+              trends: 90d
+              value_type: FLOAT
+              units: rpm
+              tags:
+                -
+                  tag: Application
+                  value: Hardware
+              trigger_prototypes:
+                -
+                  uuid: ac54b77ca4e1422d8e53ca64643cdf25
+                  expression: 'last(/Template SNMP Fortinet Devices/rpm.[{#FANNAME}],#3)<{$FAN.RPM.LOW}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template SNMP Fortinet Devices/rpm.[{#FANNAME}],#3)>{$FAN.RPM.LOW}'
+                  name: '{#FANNAME} Low RPM'
+                  opdata: 'Current rpm: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+        -
+          uuid: 165b8ff3ec41419a81dad655f1ba8b99
+          name: 'Network Interfaces'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#IFNAME},.1.3.6.1.2.1.31.1.1.1.1, {#IFALIAS},.1.3.6.1.2.1.31.1.1.1.18]'
+          key: net.if.discovery
+          delay: 3h
+          item_prototypes:
+            -
+              uuid: a74caca3f6e64817af071cdaf5fd4bf2
+              name: 'Interface {#IFNAME} {#IFALIAS}: Bits received'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.10.{#SNMPINDEX}'
+              key: 'net.if.in[ifInOctets.{#SNMPINDEX}]'
+              history: 15d
+              trends: 90d
+              units: bps
+              preprocessing:
+                -
+                  type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '8'
+              tags:
+                -
+                  tag: Application
+                  value: Interfaces
+                -
+                  tag: Application
+                  value: 'Interface {#IFNAME}'
+            -
+              uuid: 78b7fc9d03bf4e2da480c9a900171eff
+              name: 'Interface {#IFNAME} {#IFALIAS}: Bits sent'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.16.{#SNMPINDEX}'
+              key: 'net.if.out[ifOutOctets.{#SNMPINDEX}]'
+              history: 15d
+              trends: 90d
+              units: bps
+              preprocessing:
+                -
+                  type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '8'
+              tags:
+                -
+                  tag: Application
+                  value: Interfaces
+                -
+                  tag: Application
+                  value: 'Interface {#IFNAME}'
+            -
+              uuid: 8767459b35a64713ba43e594429bfa41
+              name: 'Interface {#IFNAME} {#IFALIAS}: Link Speed'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.2.1.31.1.1.1.15.{#SNMPINDEX}'
+              key: 'net.if.speed[ifSpeed.{#SNMPINDEX}]'
+              delay: 10m
+              history: 15d
+              trends: 90d
+              units: bps
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1000000'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
+              tags:
+                -
+                  tag: Application
+                  value: Interfaces
+                -
+                  tag: Application
+                  value: 'Interface {#IFNAME}'
+            -
+              uuid: 655f368d9d8f4ceab673e7c4d3540c5a
+              name: 'Interface {#IFNAME} {#IFALIAS}: Operational status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.8.{#SNMPINDEX}'
+              key: 'net.if.status[ifOperStatus.{#SNMPINDEX}]'
+              history: 15d
+              trends: 90d
+              valuemap:
+                name: 'IF-MIB::ifOperStatus'
+              preprocessing:
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 15m
+              tags:
+                -
+                  tag: Application
+                  value: Interfaces
+                -
+                  tag: Application
+                  value: 'Interface {#IFNAME}'
+              trigger_prototypes:
+                -
+                  uuid: 64549f573925468ea45a9524bd82fe98
+                  expression: '{$IFCONTROL:"{#IFNAME}"}=1 and (last(/Template SNMP Fortinet Devices/net.if.status[ifOperStatus.{#SNMPINDEX}])=2 and (last(/Template SNMP Fortinet Devices/net.if.status[ifOperStatus.{#SNMPINDEX}],#1)<>last(/Template SNMP Fortinet Devices/net.if.status[ifOperStatus.{#SNMPINDEX}],#2))=1)'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template SNMP Fortinet Devices/net.if.status[ifOperStatus.{#SNMPINDEX}],#2)=1 or {$IFCONTROL:"{#IFNAME}"}=0'
+                  name: 'Interface {#IFNAME} {#IFALIAS}: Link Down'
+                  priority: AVERAGE
+                  description: |
+                    This trigger expression works as follows:
+                    1. Can be triggered if operations status is down.
+                    2. {$IFCONTROL:"{#IFNAME}"}=1 - user can redefine Context macro to value - 0. That marks this interface as not important. No new trigger will be fired if this interface is down.
+                    3. {TEMPLATE_NAME:METRIC.diff()}=1) - trigger fires only if operational status was up(1) sometime before. (So, do not fire 'ethernal off' interfaces.)
+                    
+                    WARNING: if closed manually - won't fire again on next poll, because of .diff.
+                  manual_close: 'YES'
+            -
+              uuid: 9bd61afc821443f383ba7bd121d214a4
+              name: 'Interface {#IFNAME} {#IFALIAS}: Interface type'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.3.{#SNMPINDEX}'
+              key: 'net.if.type[ifType.{#SNMPINDEX}]'
+              delay: 1h
+              history: 15d
+              trends: 90d
+              valuemap:
+                name: 'IF-MIB::ifType'
+              preprocessing:
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
+              tags:
+                -
+                  tag: Application
+                  value: Interfaces
+                -
+                  tag: Application
+                  value: 'Interface {#IFNAME}'
+          graph_prototypes:
+            -
+              uuid: d07b4db142e04c30bdb8a7c96a397ab8
+              name: 'Network Traffic {#IFNAME} {#IFALIAS}'
+              graph_items:
+                -
+                  color: 1A7C11
+                  item:
+                    host: 'Template SNMP Fortinet Devices'
+                    key: 'net.if.in[ifInOctets.{#SNMPINDEX}]'
+                -
+                  sortorder: '1'
+                  color: F63100
+                  item:
+                    host: 'Template SNMP Fortinet Devices'
+                    key: 'net.if.out[ifOutOctets.{#SNMPINDEX}]'
+        -
+          uuid: 34b52159f06f4eb4be0d2778cdd38b26
+          name: 'PSU Discovery'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#PSUNAME},.1.3.6.1.4.1.12356.101.4.3.2.1.2,{#PSUVALUE},.1.3.6.1.4.1.12356.101.4.3.2.1.3]'
+          key: psu.discovery
+          delay: 3h
+          filter:
+            evaltype: AND
+            conditions:
+              -
+                macro: '{#PSUNAME}'
+                value: PS
+                formulaid: A
+              -
+                macro: '{#PSUNAME}'
+                value: Status
+                formulaid: B
+              -
+                macro: '{#PSUVALUE}'
+                value: '-1'
+                operator: NOT_MATCHES_REGEX
+                formulaid: C
+          item_prototypes:
+            -
+              uuid: 5498e575adad465aa5bb91b5277651d1
+              name: '{#PSUNAME}'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.4.3.2.1.3.{#SNMPINDEX}'
+              key: 'psu.status.[{#PSUNAME}]'
+              delay: 5m
+              history: 15d
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 15m
+              tags:
+                -
+                  tag: Application
+                  value: Hardware
+        -
+          uuid: 1075f5e4553d4c1a8786e50aaa94bb49
+          name: 'Performance SLA'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SLANAME},.1.3.6.1.4.1.12356.101.4.9.2.1.2,{#IFNAME},.1.3.6.1.4.1.12356.101.4.9.2.1.14]'
+          key: sla.discovery
+          delay: 3h
+          filter:
+            evaltype: OR
+            conditions:
+              -
+                macro: '{#SLANAME}'
+                value: (Internet|FARROUPILHA|SOBRAL|FORTALEZA|CRATO)
+                formulaid: A
+          item_prototypes:
+            -
+              uuid: e06c64816b20494f95795b7884762a8d
+              name: 'SLA {#SLANAME}: {#IFNAME} Jitter'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.4.9.2.1.6.{#SNMPINDEX}'
+              key: 'sla.jitter[{#SLANAME}.{#IFNAME}]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.001'
+              tags:
+                -
+                  tag: Application
+                  value: 'SLA Check'
+            -
+              uuid: 9cdb4c02d6df47b1a7910275091af5a1
+              name: 'SLA {#SLANAME}: {#IFNAME} Packet Loss'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.4.9.2.1.9.{#SNMPINDEX}'
+              key: 'sla.packet.loss[{#SLANAME}.{#IFNAME}]'
+              value_type: FLOAT
+              units: '%'
+              tags:
+                -
+                  tag: Application
+                  value: 'SLA Check'
+            -
+              uuid: 410ea8979d5b4a748a71b221a77eb9bb
+              name: 'SLA {#SLANAME}: {#IFNAME} Response Time'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.4.9.2.1.5.{#SNMPINDEX}'
+              key: 'sla.response.time[{#SLANAME}.{#IFNAME}]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.001'
+              tags:
+                -
+                  tag: Application
+                  value: 'SLA Check'
+        -
+          uuid: 33370cb4969646e5aaf9b97528dfd6fc
+          name: 'Temperature Discover'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SENSNAME},.1.3.6.1.4.1.12356.101.4.3.2.1.2,{#SENSVALUE},.1.3.6.1.4.1.12356.101.4.3.2.1.3]'
+          key: temp.discovery
+          delay: 3h
+          filter:
+            evaltype: AND
+            conditions:
+              -
+                macro: '{#SENSNAME}'
+                value: Temp|LM75
+                formulaid: A
+              -
+                macro: '{#SENSVALUE}'
+                value: '-1'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+          item_prototypes:
+            -
+              uuid: 7051c22023694788a1a7b56a36b8c361
+              name: '{#SENSNAME}'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.12356.101.4.3.2.1.3.{#SNMPINDEX}'
+              key: 'sensor.[{#SENSNAME}]'
+              delay: 5m
+              history: 15d
+              trends: 90d
+              value_type: FLOAT
+              units: ºC
+              tags:
+                -
+                  tag: Application
+                  value: Hardware
+              trigger_prototypes:
+                -
+                  uuid: da561509937c4e0aa8ac61c55babe440
+                  expression: 'last(/Template SNMP Fortinet Devices/sensor.[{#SENSNAME}],#3)>{$TEMP.CRIT}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template SNMP Fortinet Devices/sensor.[{#SENSNAME}],#3)<{$TEMP.CRIT}'
+                  name: '{#SENSNAME} is above critical threshold'
+                  opdata: 'Current {#SENSNAME}: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+      macros:
+        -
+          macro: '{$CPU.UTIL}'
+          value: '60'
+        -
+          macro: '{$FAN.RPM.LOW}'
+          value: '3000'
+        -
+          macro: '{$MEMORY.UTIL}'
+          value: '60'
+        -
+          macro: '{$TEMP.CRIT}'
+          value: '60'
+      valuemaps:
+        -
+          uuid: 6d7da37915654909b287d008009912d8
+          name: 'Fortigate HA Mode'
+          mappings:
+            -
+              value: '1'
+              newvalue: Standalone
+            -
+              value: '2'
+              newvalue: activeActive
+            -
+              value: '3'
+              newvalue: activePassive
+        -
+          uuid: d0426ebd0dca4ff8a833c1a3c0a9ee3c
+          name: 'Fortigate HA Sync Status'
+          mappings:
+            -
+              value: '0'
+              newvalue: unsynchronized
+            -
+              value: '1'
+              newvalue: ynchronized
+        -
+          uuid: 2dc20a7ceb5e4fdb8c0b905afd8061a3
+          name: 'IF-MIB::ifOperStatus'
+          mappings:
+            -
+              value: '1'
+              newvalue: up
+            -
+              value: '2'
+              newvalue: down
+            -
+              value: '4'
+              newvalue: unknown
+            -
+              value: '5'
+              newvalue: dormant
+            -
+              value: '6'
+              newvalue: notPresent
+            -
+              value: '7'
+              newvalue: lowerLayerDown
+            -
+              value: '3'
+              newvalue: testing
+        -
+          uuid: 1dfff26e68da411182fe907c2ca79571
+          name: 'IF-MIB::ifType'
+          mappings:
+            -
+              value: '1'
+              newvalue: other
+            -
+              value: '2'
+              newvalue: regular1822
+            -
+              value: '3'
+              newvalue: hdh1822
+            -
+              value: '4'
+              newvalue: ddnX25
+            -
+              value: '5'
+              newvalue: rfc877x25
+            -
+              value: '6'
+              newvalue: ethernetCsmacd
+            -
+              value: '7'
+              newvalue: iso88023Csmacd
+            -
+              value: '8'
+              newvalue: iso88024TokenBus
+            -
+              value: '9'
+              newvalue: iso88025TokenRing
+            -
+              value: '10'
+              newvalue: iso88026Man
+            -
+              value: '11'
+              newvalue: starLan
+            -
+              value: '12'
+              newvalue: proteon10Mbit
+            -
+              value: '13'
+              newvalue: proteon80Mbit
+            -
+              value: '14'
+              newvalue: hyperchannel
+            -
+              value: '15'
+              newvalue: fddi
+            -
+              value: '16'
+              newvalue: lapb
+            -
+              value: '17'
+              newvalue: sdlc
+            -
+              value: '18'
+              newvalue: ds1
+            -
+              value: '19'
+              newvalue: e1
+            -
+              value: '20'
+              newvalue: basicISDN
+            -
+              value: '21'
+              newvalue: primaryISDN
+            -
+              value: '22'
+              newvalue: propPointToPointSerial
+            -
+              value: '23'
+              newvalue: ppp
+            -
+              value: '24'
+              newvalue: softwareLoopback
+            -
+              value: '25'
+              newvalue: eon
+            -
+              value: '26'
+              newvalue: ethernet3Mbit
+            -
+              value: '27'
+              newvalue: nsip
+            -
+              value: '28'
+              newvalue: slip
+            -
+              value: '29'
+              newvalue: ultra
+            -
+              value: '30'
+              newvalue: ds3
+            -
+              value: '31'
+              newvalue: sip
+            -
+              value: '32'
+              newvalue: frameRelay
+            -
+              value: '33'
+              newvalue: rs232
+            -
+              value: '34'
+              newvalue: para
+            -
+              value: '35'
+              newvalue: arcnet
+            -
+              value: '36'
+              newvalue: arcnetPlus
+            -
+              value: '37'
+              newvalue: atm
+            -
+              value: '38'
+              newvalue: miox25
+            -
+              value: '39'
+              newvalue: sonet
+            -
+              value: '40'
+              newvalue: x25ple
+            -
+              value: '41'
+              newvalue: iso88022llc
+            -
+              value: '42'
+              newvalue: localTalk
+            -
+              value: '43'
+              newvalue: smdsDxi
+            -
+              value: '44'
+              newvalue: frameRelayService
+            -
+              value: '45'
+              newvalue: v35
+            -
+              value: '46'
+              newvalue: hssi
+            -
+              value: '47'
+              newvalue: hippi
+            -
+              value: '48'
+              newvalue: modem
+            -
+              value: '49'
+              newvalue: aal5
+            -
+              value: '50'
+              newvalue: sonetPath
+            -
+              value: '51'
+              newvalue: sonetVT
+            -
+              value: '52'
+              newvalue: smdsIcip
+            -
+              value: '53'
+              newvalue: propVirtual
+            -
+              value: '54'
+              newvalue: propMultiplexor
+            -
+              value: '55'
+              newvalue: ieee80212
+            -
+              value: '56'
+              newvalue: fibreChannel
+            -
+              value: '57'
+              newvalue: hippiInterface
+            -
+              value: '58'
+              newvalue: frameRelayInterconnect
+            -
+              value: '59'
+              newvalue: aflane8023
+            -
+              value: '60'
+              newvalue: aflane8025
+            -
+              value: '61'
+              newvalue: cctEmul
+            -
+              value: '62'
+              newvalue: fastEther
+            -
+              value: '63'
+              newvalue: isdn
+            -
+              value: '64'
+              newvalue: v11
+            -
+              value: '65'
+              newvalue: v36
+            -
+              value: '66'
+              newvalue: g703at64k
+            -
+              value: '67'
+              newvalue: g703at2mb
+            -
+              value: '68'
+              newvalue: qllc
+            -
+              value: '69'
+              newvalue: fastEtherFX
+            -
+              value: '70'
+              newvalue: channel
+            -
+              value: '71'
+              newvalue: ieee80211
+            -
+              value: '72'
+              newvalue: ibm370parChan
+            -
+              value: '73'
+              newvalue: escon
+            -
+              value: '74'
+              newvalue: dlsw
+            -
+              value: '75'
+              newvalue: isdns
+            -
+              value: '76'
+              newvalue: isdnu
+            -
+              value: '77'
+              newvalue: lapd
+            -
+              value: '78'
+              newvalue: ipSwitch
+            -
+              value: '79'
+              newvalue: rsrb
+            -
+              value: '80'
+              newvalue: atmLogical
+            -
+              value: '81'
+              newvalue: ds0
+            -
+              value: '82'
+              newvalue: ds0Bundle
+            -
+              value: '83'
+              newvalue: bsc
+            -
+              value: '84'
+              newvalue: async
+            -
+              value: '85'
+              newvalue: cnr
+            -
+              value: '86'
+              newvalue: iso88025Dtr
+            -
+              value: '87'
+              newvalue: eplrs
+            -
+              value: '88'
+              newvalue: arap
+            -
+              value: '89'
+              newvalue: propCnls
+            -
+              value: '90'
+              newvalue: hostPad
+            -
+              value: '91'
+              newvalue: termPad
+            -
+              value: '92'
+              newvalue: frameRelayMPI
+            -
+              value: '93'
+              newvalue: x213
+            -
+              value: '94'
+              newvalue: adsl
+            -
+              value: '95'
+              newvalue: radsl
+            -
+              value: '96'
+              newvalue: sdsl
+            -
+              value: '97'
+              newvalue: vdsl
+            -
+              value: '98'
+              newvalue: iso88025CRFPInt
+            -
+              value: '99'
+              newvalue: myrinet
+            -
+              value: '100'
+              newvalue: voiceEM
+            -
+              value: '101'
+              newvalue: voiceFXO
+            -
+              value: '102'
+              newvalue: voiceFXS
+            -
+              value: '103'
+              newvalue: voiceEncap
+            -
+              value: '104'
+              newvalue: voiceOverIp
+            -
+              value: '105'
+              newvalue: atmDxi
+            -
+              value: '106'
+              newvalue: atmFuni
+            -
+              value: '107'
+              newvalue: atmIma
+            -
+              value: '108'
+              newvalue: pppMultilinkBundle
+            -
+              value: '109'
+              newvalue: ipOverCdlc
+            -
+              value: '110'
+              newvalue: ipOverClaw
+            -
+              value: '111'
+              newvalue: stackToStack
+            -
+              value: '112'
+              newvalue: virtualIpAddress
+            -
+              value: '113'
+              newvalue: mpc
+            -
+              value: '114'
+              newvalue: ipOverAtm
+            -
+              value: '115'
+              newvalue: iso88025Fiber
+            -
+              value: '116'
+              newvalue: tdlc
+            -
+              value: '117'
+              newvalue: gigabitEthernet
+            -
+              value: '118'
+              newvalue: hdlc
+            -
+              value: '119'
+              newvalue: lapf
+            -
+              value: '120'
+              newvalue: v37
+            -
+              value: '121'
+              newvalue: x25mlp
+            -
+              value: '122'
+              newvalue: x25huntGroup
+            -
+              value: '123'
+              newvalue: trasnpHdlc
+            -
+              value: '124'
+              newvalue: interleave
+            -
+              value: '125'
+              newvalue: fast
+            -
+              value: '126'
+              newvalue: ip
+            -
+              value: '127'
+              newvalue: docsCableMaclayer
+            -
+              value: '128'
+              newvalue: docsCableDownstream
+            -
+              value: '129'
+              newvalue: docsCableUpstream
+            -
+              value: '130'
+              newvalue: a12MppSwitch
+            -
+              value: '131'
+              newvalue: tunnel
+            -
+              value: '132'
+              newvalue: coffee
+            -
+              value: '133'
+              newvalue: ces
+            -
+              value: '134'
+              newvalue: atmSubInterface
+            -
+              value: '135'
+              newvalue: l2vlan
+            -
+              value: '136'
+              newvalue: l3ipvlan
+            -
+              value: '137'
+              newvalue: l3ipxvlan
+            -
+              value: '138'
+              newvalue: digitalPowerline
+            -
+              value: '139'
+              newvalue: mediaMailOverIp
+            -
+              value: '140'
+              newvalue: dtm
+            -
+              value: '141'
+              newvalue: dcn
+            -
+              value: '142'
+              newvalue: ipForward
+            -
+              value: '143'
+              newvalue: msdsl
+            -
+              value: '144'
+              newvalue: ieee1394
+            -
+              value: '145'
+              newvalue: if-gsn
+            -
+              value: '146'
+              newvalue: dvbRccMacLayer
+            -
+              value: '147'
+              newvalue: dvbRccDownstream
+            -
+              value: '148'
+              newvalue: dvbRccUpstream
+            -
+              value: '149'
+              newvalue: atmVirtual
+            -
+              value: '150'
+              newvalue: mplsTunnel
+            -
+              value: '151'
+              newvalue: srp
+            -
+              value: '152'
+              newvalue: voiceOverAtm
+            -
+              value: '153'
+              newvalue: voiceOverFrameRelay
+            -
+              value: '154'
+              newvalue: idsl
+            -
+              value: '155'
+              newvalue: compositeLink
+            -
+              value: '156'
+              newvalue: ss7SigLink
+            -
+              value: '157'
+              newvalue: propWirelessP2P
+            -
+              value: '158'
+              newvalue: frForward
+            -
+              value: '159'
+              newvalue: rfc1483
+            -
+              value: '160'
+              newvalue: usb
+            -
+              value: '161'
+              newvalue: ieee8023adLag
+            -
+              value: '162'
+              newvalue: bgppolicyaccounting
+            -
+              value: '163'
+              newvalue: frf16MfrBundle
+            -
+              value: '164'
+              newvalue: h323Gatekeeper
+            -
+              value: '165'
+              newvalue: h323Proxy
+            -
+              value: '166'
+              newvalue: mpls
+            -
+              value: '167'
+              newvalue: mfSigLink
+            -
+              value: '168'
+              newvalue: hdsl2
+            -
+              value: '169'
+              newvalue: shdsl
+            -
+              value: '170'
+              newvalue: ds1FDL
+            -
+              value: '171'
+              newvalue: pos
+            -
+              value: '172'
+              newvalue: dvbAsiIn
+            -
+              value: '173'
+              newvalue: dvbAsiOut
+            -
+              value: '174'
+              newvalue: plc
+            -
+              value: '175'
+              newvalue: nfas
+            -
+              value: '176'
+              newvalue: tr008
+            -
+              value: '177'
+              newvalue: gr303RDT
+            -
+              value: '178'
+              newvalue: gr303IDT
+            -
+              value: '179'
+              newvalue: isup
+            -
+              value: '180'
+              newvalue: propDocsWirelessMaclayer
+            -
+              value: '181'
+              newvalue: propDocsWirelessDownstream
+            -
+              value: '182'
+              newvalue: propDocsWirelessUpstream
+            -
+              value: '183'
+              newvalue: hiperlan2
+            -
+              value: '184'
+              newvalue: propBWAp2Mp
+            -
+              value: '185'
+              newvalue: sonetOverheadChannel
+            -
+              value: '186'
+              newvalue: digitalWrapperOverheadChannel
+            -
+              value: '187'
+              newvalue: aal2
+            -
+              value: '188'
+              newvalue: radioMAC
+            -
+              value: '189'
+              newvalue: atmRadio
+            -
+              value: '190'
+              newvalue: imt
+            -
+              value: '191'
+              newvalue: mvl
+            -
+              value: '192'
+              newvalue: reachDSL
+            -
+              value: '193'
+              newvalue: frDlciEndPt
+            -
+              value: '194'
+              newvalue: atmVciEndPt
+            -
+              value: '195'
+              newvalue: opticalChannel
+            -
+              value: '196'
+              newvalue: opticalTransport
+            -
+              value: '197'
+              newvalue: propAtm
+            -
+              value: '198'
+              newvalue: voiceOverCable
+            -
+              value: '199'
+              newvalue: infiniband
+            -
+              value: '200'
+              newvalue: teLink
+            -
+              value: '201'
+              newvalue: q2931
+            -
+              value: '202'
+              newvalue: virtualTg
+            -
+              value: '203'
+              newvalue: sipTg
+            -
+              value: '204'
+              newvalue: sipSig
+            -
+              value: '205'
+              newvalue: docsCableUpstreamChannel
+            -
+              value: '206'
+              newvalue: econet
+            -
+              value: '207'
+              newvalue: pon155
+            -
+              value: '208'
+              newvalue: pon622
+            -
+              value: '209'
+              newvalue: bridge
+            -
+              value: '210'
+              newvalue: linegroup
+            -
+              value: '211'
+              newvalue: voiceEMFGD
+            -
+              value: '212'
+              newvalue: voiceFGDEANA
+            -
+              value: '213'
+              newvalue: voiceDID
+            -
+              value: '214'
+              newvalue: mpegTransport
+            -
+              value: '215'
+              newvalue: sixToFour
+            -
+              value: '216'
+              newvalue: gtp
+            -
+              value: '217'
+              newvalue: pdnEtherLoop1
+            -
+              value: '218'
+              newvalue: pdnEtherLoop2
+            -
+              value: '219'
+              newvalue: opticalChannelGroup
+            -
+              value: '220'
+              newvalue: homepna
+            -
+              value: '221'
+              newvalue: gfp
+            -
+              value: '222'
+              newvalue: ciscoISLvlan
+            -
+              value: '223'
+              newvalue: actelisMetaLOOP
+            -
+              value: '224'
+              newvalue: fcipLink
+            -
+              value: '225'
+              newvalue: rpr
+            -
+              value: '226'
+              newvalue: qam
+            -
+              value: '227'
+              newvalue: lmp
+            -
+              value: '228'
+              newvalue: cblVectaStar
+            -
+              value: '229'
+              newvalue: docsCableMCmtsDownstream
+            -
+              value: '230'
+              newvalue: adsl2
+            -
+              value: '231'
+              newvalue: macSecControlledIF
+            -
+              value: '232'
+              newvalue: macSecUncontrolledIF
+            -
+              value: '233'
+              newvalue: aviciOpticalEther
+            -
+              value: '234'
+              newvalue: atmbond
+            -
+              value: '235'
+              newvalue: voiceFGDOS
+            -
+              value: '236'
+              newvalue: mocaVersion1
+            -
+              value: '237'
+              newvalue: ieee80216WMAN
+            -
+              value: '238'
+              newvalue: adsl2plus
+            -
+              value: '239'
+              newvalue: dvbRcsMacLayer
+            -
+              value: '240'
+              newvalue: dvbTdm
+            -
+              value: '241'
+              newvalue: dvbRcsTdma
+            -
+              value: '242'
+              newvalue: x86Laps
+            -
+              value: '243'
+              newvalue: wwanPP
+            -
+              value: '244'
+              newvalue: wwanPP2
+            -
+              value: '245'
+              newvalue: voiceEBS
+            -
+              value: '246'
+              newvalue: ifPwType
+            -
+              value: '247'
+              newvalue: ilan
+            -
+              value: '248'
+              newvalue: pip
+            -
+              value: '249'
+              newvalue: aluELP
+            -
+              value: '250'
+              newvalue: gpon
+            -
+              value: '251'
+              newvalue: vdsl2
+            -
+              value: '252'
+              newvalue: capwapDot11Profile
+            -
+              value: '253'
+              newvalue: capwapDot11Bss
+            -
+              value: '254'
+              newvalue: capwapWtpVirtualRadio
+            -
+              value: '255'
+              newvalue: bits
+            -
+              value: '256'
+              newvalue: docsCableUpstreamRfPort
+            -
+              value: '257'
+              newvalue: cableDownstreamRfPort
+            -
+              value: '258'
+              newvalue: vmwareVirtualNic
+            -
+              value: '259'
+              newvalue: ieee802154
+            -
+              value: '260'
+              newvalue: otnOdu
+            -
+              value: '261'
+              newvalue: otnOtu
+            -
+              value: '262'
+              newvalue: ifVfiType
+            -
+              value: '263'
+              newvalue: g9981
+            -
+              value: '264'
+              newvalue: g9982
+            -
+              value: '265'
+              newvalue: g9983
+            -
+              value: '266'
+              newvalue: aluEpon
+            -
+              value: '267'
+              newvalue: aluEponOnu
+            -
+              value: '268'
+              newvalue: aluEponPhysicalUni
+            -
+              value: '269'
+              newvalue: aluEponLogicalLink
+            -
+              value: '270'
+              newvalue: aluGponOnu
+            -
+              value: '271'
+              newvalue: aluGponPhysicalUni
+            -
+              value: '272'
+              newvalue: vmwareNicTeam
+            -
+              value: '277'
+              newvalue: docsOfdmDownstream
+            -
+              value: '278'
+              newvalue: docsOfdmaUpstream
+            -
+              value: '279'
+              newvalue: gfast
+            -
+              value: '280'
+              newvalue: sdci
+            -
+              value: '281'
+              newvalue: xboxWireless
+            -
+              value: '282'
+              newvalue: fastdsl
+            -
+              value: '283'
+              newvalue: docsCableScte55d1FwdOob
+            -
+              value: '284'
+              newvalue: docsCableScte55d1RetOob
+            -
+              value: '285'
+              newvalue: docsCableScte55d2DsOob
+            -
+              value: '286'
+              newvalue: docsCableScte55d2UsOob
+            -
+              value: '287'
+              newvalue: docsCableNdf
+            -
+              value: '288'
+              newvalue: docsCableNdr
+            -
+              value: '289'
+              newvalue: ptm
+            -
+              value: '290'
+              newvalue: ghn
+  graphs:
+    -
+      uuid: 9f99256343094d58a7a14212e4cfcd3c
+      name: 'Current Connections'
+      show_work_period: 'NO'
+      graph_items:
+        -
+          color: '999900'
+          item:
+            host: 'Template SNMP Fortinet Devices'
+            key: fortinetCurrentConnections
